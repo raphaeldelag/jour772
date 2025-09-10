@@ -1,0 +1,345 @@
+---
+title: "pre_lab_01.Rmd"
+author: "Derek Willis / Rob Wells"
+date: "2025-09-09"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+### Student name: Raphael Romero Ruiz 
+
+#Update to fix confusing question
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen=999)
+```
+
+## About this notebook
+
+This notebook contains code and explanatory text that your should review
+and run as you read through chapters 13 and 15 of the course textbook,
+"Data Journalism with R and the Tidyverse".
+<https://thescoop.org/data_journalism_book/> Answer questions and edit
+the document as directed.
+
+Running this notebook will help you understand key data analysis methods
+and concepts that you will put into practice during this week's lab.
+When you come across a new command or verb in R, you should add it to
+your class reference notebook file along with what it's used for.
+
+When you are finished running the code in this notebook, you will push
+changes to your course GitHub repo, and upload the link to ELMS as
+instructed.
+
+You also should update your class reference notebook with code examples
+and what they mean. When you come across a new concept or R verb, put it
+in your reference notebook along with a sentence about what it does. For
+example:
+
+```{r}
+library(tidyverse)
+```
+
+The library function loads an R library such as the tidyverse, providing
+access to the verbs and functions that library contains. You have to
+load a library before you can use its functions.
+
+## Instructor in class demonstration outline
+
+-   Load this notebook, and provide overview of R, RStudio (text editor,
+    console, environment window, file explorer), Rmarkdown data
+    notebooks, the reference notebook.
+-   Work through the code below, chapter by chapter.
+    -   Chapter 13: explain the console and the concept of variables.
+        Explain packages, the Tidyverse, how to install them.
+    -   Chapter 15: explain loading libraries, the concept of functions,
+        loading data, the importance of having questions to guide data
+        analysis, and aggregation and summarization.
+
+## Chapter 13
+
+### Task 1: The console
+
+**Task** In the console (look below), type 2+2 and hit enter. What does
+it return? Type your answer below. **Answer:** 4 \### Task 2: Variables
+
+**Task** Put the following code -- which stores the numeral 2 as a
+variable called number -- in the console and hit enter.
+
+```{r}
+number <- 2
+```
+
+Then type this code to multiply the variable called number by itself.
+
+```{r}
+number * number
+```
+
+What does it return? Type your answer below:
+
+**Answer:** 4
+
+### Task 3: Install packages
+
+**Task** In the console, run the following code to install the
+Tidyverse:
+
+```{r}
+install.packages('tidyverse')
+```
+
+**Task** Add that
+
+Then run the following code to install the rmarkdown library
+
+```{r}
+install.packages('rmarkdown')
+```
+
+### Task 4: Load libraries
+
+**Task** Run the following code in the gray-colored codeblock below --
+not in the console -- to load the tidyverse library. To run the code,
+click the little green play button (left facing arrow) at the top right
+of the codeblock. In Rmarkdown data notebooks, we write code inside of
+codeblocks, and explanatory text in the white area outside of it.
+
+```{r}
+# This is a comment inside of a codeblock. Comments doesn't run when we run the codeblock.
+# Adding this command is a good way to start your class reference notebook.
+library(tidyverse)
+library(rmarkdown)
+```
+
+## Chapter 15
+
+### Task 5: Load data
+
+**Task** Load the UMD courses data by running the following codeblock.
+The data is contained in an .rds file, which is a binary format for R
+data.
+
+```{r}
+umd_courses <- read_rds("umd_courses.rds")
+```
+
+Once it loads, look at the environment window at right in RStudio for
+umd_courses It's next to a small blue circle with a white arrow in it.
+To the right of that, look at how many "obs" the dataset has ("obs" is
+short for observation, which is another way of saying rows or records).
+Look at how many variables it has (another way of saying columns or
+fields). Write the number of observations and variables below.
+
+**Answer** 79,366 observations and 9 variables
+
+### Task 6: Glimpse data
+
+**Task** Run the following codeblock to use glimpse() to get a sense of
+the data, some of the values in each field/variable/column, and the data
+types of each field/variable/column.
+
+```{r}
+glimpse(umd_courses)
+```
+
+In the space below, write the data type for the "id" column and the
+"seats" column (it's in light gray, offset by \< \>).
+
+**Answer** "id" is a <chr> or a character and "seats" is a <dbl> or a
+numeric value
+
+### Task 7: Examine data "head"
+
+**Task** Run the following codeblock to use head() to examine the first
+six rows of data. Explore the data by clicking the black arrow on the
+right side of the output table, allowing you to examine additional
+columns.
+
+```{r}
+head(umd_courses)
+```
+
+#Update: In the space below, write the name of the entry from the first
+row of the "title" column. **Answer** Directed Research
+
+### Task 8: Explore data with interactive dataframe
+
+**Task** look at the environment window at right in RStudio for
+umd_courses. It's next to a small blue circle with a white arrow in it.
+Click on the umd_courses -- not the blue circle. It will open the
+dataframe as an interactive table. Scroll down to see additional rows.
+Scroll left to see additional columns. Click on a column name to sort by
+that column.
+
+### Task 9: Group and count
+
+So what if we wanted to know how many classes were offered in each term?
+
+To do that by hand, we'd have to take each of the 79,366 individual rows
+(or observations or records) and sort them into a pile. We'd put them in
+groups -- one for each term -- and then count them. To do this, we'll
+take our dataset and we'll introduce a new operator: `|>`. The best way
+to read that operator, in my opinion, is to interpret that as "and then
+do this." The keyboard shortcut for this is cmd-shift-m on the Mac and
+ctrl-shift-m on Windows. Don't like that character? R now has a new one
+that does the same thing: `|>`.
+
+**Task** Run the following codeblock:
+
+```{r}
+umd_courses |>
+  group_by(term) |>
+  summarise(
+    count_classes = n()
+  )
+```
+
+Describe what you think each line of this code is doing below, based on
+the result:
+
+**Answer** "umd_courses" refers to the object in our environment window,
+we are selecting it and then "group_by(term)" refers to the action of
+gathering or grouping all of the rows with the same numeric value in the
+"term" column, lastly with "summarise(count_classes = n())" we are
+counting the number of rows for each group and then outputting the
+result in a new column called "count_classes"
+
+### Task 10: Adding arrange to sort the data
+
+**Task** Run the following codeblock:
+
+```{r}
+umd_courses |>
+  group_by(term) |>
+  summarise(
+    count_classes = n()
+  ) |>
+  arrange(desc(count_classes))
+```
+
+Compared to the previous codeblock, what has changed and how did that
+affect the result? **Answer** The only thing that has changed is that
+"arrange(desc(count_classes))" has put the row with the highest
+numerical value at the top of the list\
+\### Task 11: Grouping by multiple columns
+
+**Task** Run the following codeblock.
+
+```{r}
+umd_courses |>
+  group_by(term, department) |>
+  summarise(
+    count_classes = n()
+  ) |>
+  arrange(term, department)
+```
+
+Compared to the previous codeblock, how did the output change and what
+in the code changed it?
+
+**Answer** We have changed the second line of this chunk to
+"group_by(term, department)" which groups the data by "term" and
+"department." Then we count the number of classes in each department for
+each term by using "summarise(count_classes = n())", that is then
+displayed in order first by "term" and then "department." \### Task 12:
+Other summary functions
+
+**Task** Run the following codeblock:
+
+```{r}
+umd_courses |>
+  group_by(term) |>
+  summarise(
+    count_classes = n(),
+    total_seats = sum(seats)
+  ) |>
+  arrange(desc(total_seats))
+```
+
+Compared to the previous codeblock, what has changed and how did that
+affect the result? **Answer** In this code chunk we are grouping the
+data by term using "group_by(term)", then by using
+"summarise(count_classes = n(),total_seats = sum(seats)" we are counting
+the total amount of classes for each term and the total number of seats
+in all classes. Lastly, "arrange(desc(total_seats))" then organizes the
+chart in order by term with the most seats. This affects the result by
+displaying the total number of seats in all the classes in a single
+term. \### Task 13: different kinds of summarizations
+
+**Task** Run the following codeblock to group the umd_courses dataframe
+by term. Then do the following summarizations for each term: count the
+number of courses, add up the total of all seats, and calculate the mean
+and median contribution number of seats. Then sort so the term with the
+most total seats is listed first.
+
+```{r}
+umd_courses |>
+  group_by(term) |>
+  summarise(
+    count_classes = n(),
+    total_seats = sum(seats),
+    mean_seats = mean(seats),
+    median_seats = median(seats)
+  ) |>
+  arrange(desc(total_seats))
+```
+
+Compared to the previous codeblock, what has changed and how did that
+affect the result? What do the top terms have in common?
+
+**Answer** Compared to the previous codeblock, in this one we are still
+grouping the data by term and still counting the number of classes and
+seats in all of those classes. But now we are calculating the average
+number of seats in a term's classes with "mean_seats = mean(seats)" and
+finding the middle value for the number of seats as well with
+"median_seats = median(seats)."The data is still arranged the same way
+as the previous codeblock. This affects the result by displaying the
+average and midpoint of the number of seats in any class in any
+department in a single term. \### Task 14: more aggregations
+
+**Task** Run the following codeblock to group the umd_courses dataframe
+by the department. Then do the following summarizations for each group:
+count the number of courses, add up the total of all seats, calculate
+the mean and median number of seats and then add lines to calculate the
+smallest and largest seat numbers using the `min()` and `max()`
+functions. Then sort so the department with the largest total number of
+seats is listed first.
+
+```{r}
+umd_courses |>
+  group_by(department) |>
+  summarise(
+    count_classes = n(),
+    total_seats = sum(seats),
+    mean_seats = mean(seats),
+    median_seats = median(seats),
+    smallest_number = min(seats),
+    largest_number = max(seats)
+  ) |>
+  arrange(desc(total_seats))
+```
+
+Compared to the previous codeblock, what has changed and how did that
+affect the result? How is the data sorted?
+
+**Answer** This time the data is grouped by department instead of term
+and we have two new columns that display both the minimum and maxium
+number of seats in any class in a given department. Now instead of
+looking at one row per term we see one row per department across all
+terms. \### Task 12: Questions
+
+No code here; I want you to provide three questions that this data
+suggests to you. What would you like to ask it?
+
+**Answer**
+
+1.  Which department has the most number of classes?
+
+2.  Which department has the highest number of seats?
+
+3.  Do the departments with the highest number of seats change from term
+    to term? If so how?
