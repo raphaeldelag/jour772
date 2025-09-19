@@ -105,7 +105,7 @@ maryland_expenses %>%
 ```
 
 **Q6.** Choose your own adventure: using either the UMD courses or campaign expenses data, ask and answer a question that is different than the previous ones. You can use one of the ones you provided in the pre_lab. **A6.**
-What department has the largest average number of students who take climate focused classes?
+Which departments have the most courses about climate, and what's the average class size in those departments?
 ```{r}
 umd_courses %>%
   filter(str_detect(title, "Climate")) %>%
