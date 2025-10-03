@@ -1,0 +1,158 @@
+---
+title: "lab_04_update"
+author: "Rob Wells/Derek Willis"
+date: "2025-10-01"
+output: html_document
+---
+---
+Student name: Raphael Romero Ruiz
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## About this lab
+
+To complete this lab, you need to: \* run existing code as directed (look for **Task**). \* modify existing code as directed (look for **Task**). \* write code in empty codeblocks provided to answer questions included (look for **Q**). \* write out the answer in the form of a complete sentence in the space given (look for **A**).
+
+When you are finished, commit changes and push to your personal GitHub repo, then submit the URL to this document on ELMS.
+
+## Load libraries and establish settings
+
+You'll need to load three packages for this: the tidyverse, lubridate, refinr and janitor.
+
+**Task** load these four packages.
+
+```{r}
+install.packages("refinr")
+```
+
+```{r}
+# Turn off scientific notation
+options(scipen=999)
+
+# load your packages
+library(tidyverse)
+library(lubridate)
+library(refinr)
+library(janitor)
+```
+
+For this lab, we want to investigate spending by Maryland state and local candidates during the 2022 election. For example, we could ask how much money have candidates and committees spent on advertising on Facebook? Which vendors received the most money for media expenses? We have the data, but it's messy - names of payees are spelled differently and capitalized differently - and we need to clean it up. 
+
+
+## Load Data
+
+You'll need to load one data set, a CSV file of Maryland campaign expenditures located in the data folder called "maryland_expenses.csv"
+
+**Task** Create a codeblock below, then read the data in and assign it to an appropriate variable name. 
+--Use janitor to clean the column names
+--Convert dates into date values
+
+```{r}
+# Load the Maryland expenditures data table
+md_expenses <- read_csv("data/maryland_expenses.csv") %>%
+  clean_names()
+```
+
+## Answer questions
+
+**Q1.** You've been assigned to write about Maryland political committees' use of Facebook advertising. There's a category column in the data that has values for different kinds of spending. One of them is "Media". You'll need to complete the following steps:
+
+a.  Create a dataframe filtered for just Media expenses.
+b.  Create a `payee_clean` column and standardize the data from `payee_name` using the `n_gram_merge' command
+
+**A1:** YOUR CODE HERE
+```{r}
+media_expenses <- md_expenses %>%
+  filter(expense_category == "Media") %>%
+  mutate(payee_clean = n_gram_merge(payee_name))
+```
+
+
+**Q2** More cleaning of Facebook. Look carefully at variations of Facebook, bearing in mind that it changed its name in 2021: <https://about.fb.com/news/2021/10/facebook-company-is-now-meta/>).
+
+Create a new object called `expenses_summary` 
+Using case_when, create a column called `payee_FB` that will standardize all the variations on Facebook and **its parent company** in the data. 
+Filter the data in `payee_FB` for all of the standardized Facebook items.
+Then calculate the total amount of Facebook spending by each committee and present the results showing the committee that spent the most first.
+
+**A**: YOUR CODE HERE
+```{r}
+expenses_summary <- media_expenses %>%
+  mutate(payee_FB = case_when(
+    str_detect(str_to_lower(payee_clean), "facebook|meta platforms|meta inc|meta") ~ "Facebook/Meta"
+  )) %>%
+  filter(payee_FB == "Facebook/Meta") %>%
+  group_by(committee_name) %>%
+  summarise(total_spent_FB = sum(amount, na.rm = TRUE)) %>%
+  arrange(desc(total_spent_FB))
+```
+
+**Q3.** Let's do some research on the top committees from question 1. Look up the top 10 spenders:  if they are candidate committees, what offices were they running for? 
+
+** WRITE THE ANSWER**
+**A3.**
+The top 10 spenders are mostly comprised of candidate committees, with just a single PAC, "Maryland Opportunity Inc." taking the number four spot. In order by most largest sum, the offices that had the most money spent include the Governor's race with 11,639,135 spent, then the Comptroller's race 5,111,218, then the Montgomery County Executive's race 3,121,373, then the Anne Arundel County Executive's race with 1,778,237 spent, and finally the Attorney General's race at 1,368,567. 
+```{r}
+#grouping by committee name and adding amounts to find the top 10 spenders
+top_10_committees <- media_expenses %>%
+  group_by(committee_name) %>%
+  summarise(total_spent = sum(amount, na.rm = TRUE)) %>%
+  arrange(desc(total_spent)) %>% 
+  slice_head(n = 10)
+```
+
+**Q4.** Examine the list of top spenders and the primary results for governor.
+
+**a.** Write code to determine this answer: Filter for the Democratic primary winner for governor (Hint: that person has two committees, the second one with his running mate). Now determine the biggest recipients of media expenses for this Democratic primary winner for governor.
+
+**A**: YOUR CODE HERE
+```{r}
+#filter for both Moore/Miller committees, group by payee and adding amounts to find total
+dem_primary_winner_recipients <- media_expenses %>%
+  filter(committee_name == "Moore Miller For Maryland Slate" | 
+         committee_name == "Moore For Maryland") %>%
+  group_by(payee_clean) %>%
+  summarise(total_media_spent = sum(amount, na.rm = TRUE)) %>%
+  arrange(desc(total_media_spent))
+```
+**b.** Describe the business of the top recipient.
+** WRITE THE ANSWER**
+A quick google search of "SKDK" reveals that then Democratic primary candidate for Maryland Governor, Wes Moore, contracted a political consulting and communications firm. SKDK has a history of working with Democratic candidates and causes. They provide a range of communication services ranging from crisis communications to opinion research, which enriches the strategies that the firm develops not just politicos but also for businesses.
+
+One of the case studies they include on their website stood out to me for my own personal connection to the cause. SKDK has worked with GIFFORDS an organization started by former Arizona Congresswoman Gabrielle Giffords, that pushes for gun law reform and advocates on behalf of victims of gun violence. Giffords herself was a victim of gun violence when I was a youngin in Tucson. Later in life I would end up going to the same high school that she attended and was taught by the same AP U.S. History professor as her.  
+
+**Q5.** Examine the standardized purpose column in the media expenses data. Write code to generate a list of the committees with the total amount of spending on online advertising. 
+
+--How does this list compare to the list you already generated about top Facebook spenders? 
+--Of the top 5 committees who spent the most on Facebook ads from the first list, are there any that appear to have spent *all* of their online advertising dollars on Facebook?
+
+**A5.**YOUR CODE HERE
+
+```{r}
+#list of the committees with total amount of spending on online advertising
+online_ad_spending <- media_expenses %>%
+  filter(str_to_lower(expense_purpose) == "online advertising") %>%
+  group_by(committee_name) %>%
+  summarise(total_online_spent = sum(amount, na.rm = TRUE)) %>%
+  arrange(desc(total_online_spent))
+
+#comparing to facebook spenders
+combined_spending <- online_ad_spending %>%
+  left_join(expenses_summary, by = "committee_name") %>%
+  rename(facebook_spent = total_spent_FB)
+
+#join to see if top 5 Facebook spenders spent all online advertising on Facebook
+top_5_comparison <- expenses_summary %>%
+  left_join(online_ad_spending, by = "committee_name") %>%
+  mutate(all_online_on_facebook = total_spent_FB >= total_online_spent) %>%
+  arrange(desc(total_spent_FB)) %>%
+  slice_head(n = 5)
+```
+
+**Q6** Your editor asks you to summarize your findings about spending on Facebook by Maryland political candidates. How much do we know and what don't we know? What's the best story idea you've found here?
+
+**A6** ** WRITE THE ANSWER**
+We know that Maryland politicos invest heavily in Facebook advertising, with some committees spending their entire online ad budget exclusively on the platform. Facebook and other Meta properties remain a dominant channel for reaching voters digitally, but many campaign committees also diversify across other online platforms. A review of online ad payees reveals other tech titans like Google and Apple, alongside a range of miscellaneous groups including webpage hosts and newsletter servers. What we don’t know fully includes the total extent of online ad spending beyond what is disclosed, the influence of consultant and intermediary groups handling ad buys, and the true effectiveness of these ads.The  story I would pitch would center on this: Facebook is a core tool for some campaigns, yet the broader digital advertising ecosystem remains opaque. Ultimately, this piece would highlight the urgent need for improved disclosure to fully illuminate how digital ad dollars influence Maryland elections.
