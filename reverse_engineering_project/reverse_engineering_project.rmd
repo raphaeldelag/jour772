@@ -23,8 +23,8 @@ census_api_key("4bdc2640d2614eaf426a459330895d8dab492adf", install=TRUE)
 ```
 
 ```{r}
-homicides_wapo <- read_xls("census-data/co-est00int-01-24.xls") %>%
-  slice((6):(n() - 8))
+homicides_wapo <- read_csv("data-homicides/homicide-data.csv") %>% 
+  clean_names()
 ```
 
 ```{r}
@@ -51,34 +51,21 @@ baltimore_range <- homicides_wapo %>%
 
 ```{r}
 # Get population estimates for Baltimore City (2007-2014)
-# First get 2007-2009 from CSV file
-baltimore_pop_2007_2009_for_pre2015 <- read_csv("census-data/co-est00int-agesex-5yr.csv") %>%
-  clean_names()
-```
-
-
-```{r}
-# Filter for Baltimore City
-census_pops_2009 <- baltimore_pop_2007_2009_for_pre2015 %>%  
-  filter(ctyname == "Baltimore city") %>%
-  # Select relevant columns for 2007, 2008, 2009 population estimates
-  select(ctyname, contains("2007"), contains("2008"), contains("2009")) %>%
-  # Reshape the data to have year and population columns
-  pivot_longer(cols = ctyname, 
+# First get 2007-2009 from XLS file
+census_pop_2007_2009 <- read_xls("census-data/co-est00int-01-24.xls") %>%
+  slice((6):(n() - 8)) %>%
+  clean_names() %>%
+  filter(str_detect(table_with_row_headers_in_column_a_and_column_headers_in_rows_3_through_4_leading_dots_indicate_sub_parts, "Baltimore city")) %>%
+  transmute(
+    pop_2007 = as.numeric(x10),
+    pop_2008 = as.numeric(x11), 
+    pop_2009 = as.numeric(x12)
+  ) %>%
+  pivot_longer(cols = everything(),
                names_to = "year_col", 
                values_to = "population") %>%
-  # Extract year from column names
-  mutate(year = case_when(
-    str_detect(year_col, "2007") ~ 2007,
-    str_detect(year_col, "2008") ~ 2008,
-    str_detect(year_col, "2009") ~ 2009,
-    TRUE ~ NA_real_
-  )) %>%
-  filter(!is.na(year)) %>%
-  # Group by year and sum population (in case there are multiple age/sex categories)
-  group_by(year) %>%
-  summarise(population = sum(population, na.rm = TRUE)) %>%
-  arrange(year)
+  mutate(year = as.numeric(str_extract(year_col, "[0-9]{4}"))) %>%
+  select(year, population)
 ```
 
 ```{r}
@@ -114,9 +101,9 @@ census_pop_2010_2014 <- get_estimates(
 ```
 
 ```{r}
-# Combine 2007-2009 CSV data with 2010-2014 Census API data
+# Combine 2007-2009 Excel data with 2010-2014 Census API data
 pop_estimates_pre_2015 <- bind_rows(
-  baltimore_pop_2007_2009_for_pre2015,
+  census_pop_2007_2009,
   census_pop_2010_2014
 ) %>%
   arrange(year)
@@ -181,12 +168,14 @@ num_hom_and_arrests_bmore_by_year_post_2015 <- homicides_wapo %>%
   ) %>%
   arrange(year)
 ```
+
 ```{r}
 # Calculate pre-2015 rates (2007-2014 data already combined in pop_estimates_pre_2015)
 bmore_hom_rates_pre_2015 <- num_hom_and_arrest_bmore_by_year_pre_2015 %>%
   left_join(pop_estimates_pre_2015, by = "year") %>%
   mutate(homicide_rate_per_100k = round((homicides / population) * 100000, 1))
 ```
+
 ```{r}
 # Calculate post-2015 rates
 bmore_hom_rates_post_2015 <- num_hom_and_arrests_bmore_by_year_post_2015 %>%
@@ -209,6 +198,9 @@ avg_arrest_rate_post_2015 <- round(mean(num_hom_and_arrests_bmore_by_year_post_2
 # Calculate change in arrest rates
 arrest_rate_change <- avg_arrest_rate_post_2015 - avg_arrest_rate_pre_2015
 
+```
+
+```{r}
 # Combine all years into one comparison
 all_years <- bind_rows(
   bmore_hom_rates_pre_2015,
