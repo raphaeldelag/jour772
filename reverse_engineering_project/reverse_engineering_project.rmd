@@ -183,29 +183,15 @@ bmore_rates_all_years <- bind_rows(
 
 ```{r}
 # CHICAGO ANALYSIS
-# Get Chicago homicides and arrests by year before 2015
-num_hom_and_arrest_chicago_by_year_pre_2015 <- homicides_wapo %>%
-  filter(city == "Chicago" & reported_date < "2015-01-01") %>%
-  mutate(year = year(reported_date)) %>%
-  group_by(year) %>%
-  summarise(
-    homicides = n(),
-    arrests = sum(disposition == "Closed by arrest"),
-    arrest_rate = round((sum(disposition == "Closed by arrest") / n()) * 100, 1)
-  ) %>%
-  arrange(year)
-```
-
-```{r}
 # Get population estimates for Chicago (2015-2017)
 pop_estimates_chicago_post_2015 <- get_estimates(
     geography = "place",
     vintage = 2019,
     time_series = TRUE,
     state = "IL",
-    place = "14000",  # Chicago place code
     variable = "POP"
   ) %>%
+  filter(str_detect(NAME, "^Chicago city, Illinois$")) %>%
   mutate(year = case_when(
     DATE == 1 ~ 2010,
     DATE == 2 ~ 2010,
@@ -239,34 +225,12 @@ num_hom_and_arrests_chicago_by_year_post_2015 <- homicides_wapo %>%
   ) %>%
   arrange(year)
 ```
-```{r}
-# Calculate pre-2015 rates
-chi_hom_rates_pre_2015 <- num_hom_and_arrest_chicago_by_year_pre_2015 %>%
-  left_join(pop_estimates_chicago_pre_2015, by = "year") %>%
-  mutate(homicide_rate_per_100k = round((homicides / population) * 100000, 1))
-```
 
 ```{r}
 # Calculate post-2015 rates
 chi_hom_rates_post_2015 <- num_hom_and_arrests_chicago_by_year_post_2015 %>%
   left_join(pop_estimates_chicago_post_2015, by = "year") %>%
   mutate(homicide_rate_per_100k = round((homicides / population) * 100000, 1))
-```
-
-```{r}
-# Combine all years into one comparison
-chi_rates_all_years <- bind_rows(
-  chi_hom_rates_pre_2015,
-  chi_hom_rates_post_2015
-) %>%
-  arrange(year)
-```{r}
-# Combine all years into one comparison
-chi_rates_all_years <- bind_rows(
-  bmore_hom_rates_pre_2015,
-  bmore_hom_rates_post_2015
-) %>%
-  arrange(year)
 ```
 
 ```{r}
